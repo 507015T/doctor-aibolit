@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    command: sh -c "python3.13 manage.py runserver 0.0.0.0:8000"
+
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+

@@ -14,9 +14,9 @@ from pathlib import Path
 import sys
 from dotenv import load_dotenv
 from os import getenv
-load_dotenv()
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env.dev")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -26,6 +26,7 @@ SECRET_KEY = getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
+TESTING = 'test' in sys.argv
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -140,7 +141,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_RENDERER_CLASSES": (
         ("rest_framework.renderers.JSONRenderer",)
-        if not DEBUG
+        if not DEBUG and not TESTING
         else (
             "rest_framework.renderers.JSONRenderer",
             "rest_framework.renderers.BrowsableAPIRenderer",
@@ -163,4 +164,3 @@ SPECTACULAR_SETTINGS = {
 # ]
 
 NEXT_TAKINGS_PERIOD = 120
-TEST = 'test' in sys.argv

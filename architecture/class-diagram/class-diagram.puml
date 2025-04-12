@@ -1,0 +1,51 @@
+@startuml
+package "Entities (Enterprise Business Rules)" {
+  class MedicationSchedule << (D,orchid) Django Model >> {
+    + id: int
+    + medication_name: str
+    + frequency: int
+    + duration_days: int?
+    + start_date: date
+    + end_date: date?
+    + user: ForeignKey(User)
+    --
+    + save()
+  }
+}
+
+package "Interface Adapters (Application Business Rules)" {
+  class MedicationScheduleSerializer << (S,orange) Serializer >> {
+    + id: ReadOnlyField
+    + user_id: PrimaryKeyRelatedField
+    + daily_plan: SerializerMethodField
+    + end_date: SerializerMethodField
+    --
+    + to_representation()
+    + get_end_date()
+    + validate_frequency()
+    + validate_daily_plan()
+    + get_daily_plan()
+    - _generate_daily_plan()
+  }
+}
+
+package "Frameworks & Drivers" {
+  class MedicationScheduleViewSet << (C,lightblue) ViewSet >> {
+    - queryset
+    - serializer_class
+    - filter_backends
+    - filterset_class
+    --
+    + list()
+    + retrieve()
+    + create()
+    + next_takings()
+    - _get_required_params()
+    - _get_upcoming_takings()
+  }
+}
+
+MedicationScheduleViewSet --> MedicationSchedule : "manages"
+MedicationScheduleViewSet --> MedicationScheduleSerializer : "uses"
+MedicationScheduleSerializer ..> MedicationSchedule : "serializes"
+@enduml

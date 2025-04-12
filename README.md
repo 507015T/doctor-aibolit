@@ -1,3 +1,9 @@
+# Class diagram
+![Class diagram](architecture/class-diagram/class-diagram.svg)
+
+# ER diagram
+![ER diagram](architecture/er-diagram/er-diagram.svg)
+
 ## Instalation
 
 1. Clone the repository:
@@ -8,30 +14,22 @@
    ```bash
    cd doctor-aibolit
    ```
-3. create venv, makemigrations, migrate 
-   ```bash
-   python3 -m venv venv && source venv/bin/activate && pip3 install -r requirements.txt && python3 manage.py makemigrations && python3 manage.py migrate
-
    ```
-4. If you use docker, docker-compose
+4. Build project(with docker)
     ```bash
-    docker-compose build && docker-compose up
+    sudo docker build -t doctor-aibolit .
     ```
+5. Run project
+    ```bash
+    sudo docker run -p 8000:8000 doctor-aibolit
+    ```
+
 
 ## Configuration
 
 Set the following environment variables:
 
-- `SECRET_KEY`: Django secret key for production environment.
-- `DEBUG`: Set to `True` in development, `False` in production.
+- for development use and add (if you need) environment variables in the .env.dev file
+
 ## Testing
-
-To run tests:
-
-1. Make sure the virtual environment is activated.
-2. Run the following command:
-   ```bash
-   python3 manage.py test
-   ```
-
-This will run all the unit tests for the project.
+Tests will start with the build project(item 4)

@@ -1,0 +1,18 @@
+@startuml
+entity "User" as user {
+  + id: int [PK]
+}
+
+entity "MedicationSchedule" as med {
+  + id: int [PK]
+  --
+  medication_name : varchar(255)
+  frequency : smallint
+  duration_days : smallint NULL
+  start_date : date
+  end_date : date NULL
+  user_id : int [FK]
+}
+
+user ||--o{ med : "has many"
+@enduml

@@ -167,9 +167,9 @@ class MedicationScheduleViewSet(
     )
     def next_takings(self, request, *args, **kwargs):
         user_id = self._get_required_params(request, ["user_id"])[0]
-        next_takings_period = 120 if settings.TEST else settings.NEXT_TAKINGS_PERIOD
+        next_takings_period = 120 if settings.TESTING else settings.NEXT_TAKINGS_PERIOD
         current_time = (
-            datetime.strptime("07:59", "%H:%M") if settings.TEST else datetime.now()
+            datetime.strptime("07:59", "%H:%M") if settings.TESTING else datetime.now()
         )
         time_limit = current_time + timedelta(minutes=next_takings_period)
 

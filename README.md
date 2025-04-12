@@ -14,7 +14,6 @@
    ```bash
    cd doctor-aibolit
    ```
-   ```
 4. Build project(with docker)
     ```bash
     sudo docker build -t doctor-aibolit .

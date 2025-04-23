@@ -11,10 +11,15 @@ from backend import settings
 from schedule.filters import MedicationScheduleFilter
 from schedule.models import MedicationSchedule
 from schedule.serializers import MedicationScheduleSerializer
-from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema,
+    OpenApiParameter,
+    extend_schema_view,
+)
 
 
-# swagger 
+# swagger
 @extend_schema_view(
     list=extend_schema(
         operation_id="list_medication_schedules",
@@ -25,37 +30,103 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema
                 description="ID пользователя, для которого нужно получить расписания.",
                 required=True,
                 type=int,
+                examples=[
+                    OpenApiExample(
+                        "Пример запроса с user_id=1",
+                        value=1,
+                        description="Запрос для пользователя с id=1",
+                    )
+                ],
             )
         ],
-        responses={
-            200: {
-                "type": "object",
-                "properties": {
-                    "user_schedules": {"type": "array", "items": {"type": "integer"}},
+        filters=False,
+        examples=[
+            OpenApiExample(
+                "Пример успешного ответа",
+                value={
+                    "user_schedules": [1, 2, 3],
                 },
-            }
-        },
+            ),
+            OpenApiExample(
+                "Пример ответа, если не найдено расписаний приемов(или же пользователя)",
+                value={
+                    "user_schedules": [],
+                },
+            ),
+        ],
     ),
     retrieve=extend_schema(
         operation_id="retrieve_medication_schedule",
         description="Получение подробной информации о расписании для пользователя.",
         parameters=[
             OpenApiParameter(
-                name="user_id", description="ID пользователя.", required=True, type=int
+                name="user_id",
+                description="ID пользователя.",
+                required=True,
+                type=int,
+                examples=[OpenApiExample("Пример правильного запроса", value=1)],
             ),
             OpenApiParameter(
                 name="schedule_id",
                 description="ID расписания для получения данных.",
                 required=True,
                 type=int,
+                examples=[OpenApiExample("Пример правильного запроса", value=1)],
             ),
         ],
         responses={200: MedicationScheduleSerializer},
+        examples=[
+            OpenApiExample(
+                "Пример успешного ответа 1",
+                value={
+                    "id": 1,
+                    "medication_name": "Фурацилин",
+                    "frequency": 11,
+                    "user_id": 1,
+                    "daily_plan": [
+                        "08:00",
+                        "09:30",
+                        "11:00",
+                        "12:15",
+                        "13:45",
+                        "15:00",
+                        "16:30",
+                        "18:00",
+                        "19:15",
+                        "20:45",
+                        "22:00",
+                    ],
+                    "duration_days": 4,
+                    "start_date": "2025-08-23",
+                    "end_date": "2025-08-27",
+                },
+            ),
+            OpenApiExample(
+                "Пример успешного ответа 2",
+                value={
+                    "id": 2,
+                    "medication_name": "Миноксидил",
+                    "frequency": 3,
+                    "user_id": 1,
+                    "daily_plan": ["08:00", "15:00", "22:00"],
+                    "duration_days": None,
+                    "start_date": "2025-06-01",
+                    "end_date": None,
+                },
+            ),
+        ],
     ),
     create=extend_schema(
         operation_id="create_medication_schedule",
         description="Создание нового расписания для пользователя.",
         responses={201: MedicationScheduleSerializer},
+        examples=[OpenApiExample("Пример правильного запроса", value={
+            "medication_name": "Парацетомол",
+            "frequency": 8,
+            "duration_days": 4,
+            "user_id": 1,
+        }), OpenApiExample("Пример ответа", value={"schedule_id": 1})
+]
     ),
     next_takings=extend_schema(
         operation_id="next_takings_medication_schedule",
@@ -66,7 +137,46 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema
                 description="ID пользователя, для которого нужно получить предстоящие приемы.",
                 required=True,
                 type=int,
+                examples=[
+                    OpenApiExample(
+                        "Пример запроса с user_id=1",
+                        value=1,
+                        description="Запрос для пользователя с id=1",
+                    )
+                ],
             )
+        ],
+        examples=[
+            OpenApiExample(
+                "Пример успешного ответа",
+                value={
+                    "user_id": "1",
+                    "next_takings": [
+                        {
+                            "schedule_id": 1,
+                            "schedule_name": "Фурацилин",
+                            "schedule_times": ["08:00", "09:45"],
+                        },
+                        {
+                            "schedule_id": 2,
+                            "schedule_name": "Тренболон",
+                            "schedule_times": ["08:00", "09:00"],
+                        },
+                        {
+                            "schedule_id": 3,
+                            "schedule_name": "Ингаверин",
+                            "schedule_times": ["08:00"],
+                        },
+                    ],
+                },
+            ),
+            OpenApiExample(
+                "Пример ответа, если не найдено следующих приемов(или же пользователя)",
+                value={
+                    "user_id": "1",
+                    "next_takings": [],
+                },
+            ),
         ],
         responses={
             200: {

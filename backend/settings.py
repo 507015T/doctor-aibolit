@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # "debug_toolbar",
     "schedule.apps.ScheduleConfig",
+    "user.apps.UserConfig",
 ]
 
 MIDDLEWARE = [

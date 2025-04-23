@@ -9,6 +9,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from backend import settings
 from schedule.filters import MedicationScheduleFilter
+from schedule import utils, services
 from schedule.models import MedicationSchedule
 from schedule.serializers import MedicationScheduleSerializer
 from drf_spectacular.utils import (
@@ -120,13 +121,18 @@ from drf_spectacular.utils import (
         operation_id="create_medication_schedule",
         description="Создание нового расписания для пользователя.",
         responses={201: MedicationScheduleSerializer},
-        examples=[OpenApiExample("Пример правильного запроса", value={
-            "medication_name": "Парацетомол",
-            "frequency": 8,
-            "duration_days": 4,
-            "user_id": 1,
-        }), OpenApiExample("Пример ответа", value={"schedule_id": 1})
-]
+        examples=[
+            OpenApiExample(
+                "Пример правильного запроса",
+                value={
+                    "medication_name": "Парацетомол",
+                    "frequency": 8,
+                    "duration_days": 4,
+                    "user_id": 1,
+                },
+            ),
+            OpenApiExample("Пример ответа", value={"schedule_id": 1}),
+        ],
     ),
     next_takings=extend_schema(
         operation_id="next_takings_medication_schedule",
@@ -209,36 +215,18 @@ class MedicationScheduleViewSet(
     filter_backends = [DjangoFilterBackend]
     filterset_class = MedicationScheduleFilter
 
-    def _get_required_params(self, request, params):
-        missing = [p for p in params if not request.query_params.get(p)]
-        if missing:
-            raise ValidationError(
-                {"response": f"Missing parameters: {", ".join(missing)}"}
-            )
-
-        return [request.query_params.get(p) for p in params]
-
     def list(self, request, *args, **kwargs):
-        user_id = self._get_required_params(request, ["user_id"])
-        queryset = self.filter_queryset(self.get_queryset())
-        schedule_ids = queryset.values_list("id", flat=True)
+        user_id = utils.get_required_params(request, ["user_id"])[0]
+        schedule_ids = services.MedicationScheduleService.get_schedules_for_user(
+            user_id
+        )
         return Response({"user_schedules": list(schedule_ids)})
 
     def retrieve(self, request, *args, **kwargs):
-        user_id, schedule_id = self._get_required_params(
+        user_id, schedule_id = utils.get_required_params(
             request, ["user_id", "schedule_id"]
         )
-
-        instance = get_object_or_404(
-            MedicationSchedule, pk=schedule_id, user_id=user_id
-        )
-        end_date_taking = instance.end_date
-        if end_date_taking and end_date_taking < date.today():
-            raise NotFound(
-                {
-                    "response": f"The medication '{instance.medication_name}' intake ended on {end_date_taking}"
-                }
-            )
+        instance = services.MedicationScheduleService.get_schedule(user_id, schedule_id)
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -276,7 +264,7 @@ class MedicationScheduleViewSet(
         ],
     )
     def next_takings(self, request, *args, **kwargs):
-        user_id = self._get_required_params(request, ["user_id"])[0]
+        user_id = utils.get_required_params(request, ["user_id"])[0]
         next_takings_period = 120 if settings.TESTING else settings.NEXT_TAKINGS_PERIOD
         current_time = (
             datetime.strptime("07:59", "%H:%M") if settings.TESTING else datetime.now()
@@ -287,27 +275,7 @@ class MedicationScheduleViewSet(
             Q(end_date__gte=date.today()) | Q(end_date__isnull=True), user__id=user_id
         )
         scheduled_data = self.get_serializer(schedules, many=True).data
-        upcoming_takings = self._get_upcoming_takings(
+        upcoming_takings = services.MedicationScheduleService.get_upcoming_takings(
             scheduled_data, current_time, time_limit
         )
         return Response({"user_id": user_id, "next_takings": upcoming_takings})
-
-    def _get_upcoming_takings(self, scheduled_data, current_time, time_limit):
-        def is_within_timeframe(time_str):
-            time_obj = datetime.strptime(time_str, "%H:%M").time()
-            return (
-                time(8, 0) <= time_obj <= time(22, 0)
-                and current_time.time() < time_obj < time_limit.time()
-            )
-
-        return [
-            {
-                "schedule_id": schedule["id"],
-                "schedule_name": schedule["medication_name"],
-                "schedule_times": list(
-                    filter(is_within_timeframe, schedule["daily_plan"])
-                ),
-            }
-            for schedule in scheduled_data
-            if any(map(is_within_timeframe, schedule["daily_plan"]))
-        ]

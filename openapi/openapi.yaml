@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Pill Schedule API
+  version: 0.0.1
+  description: Test Task for kode.ru by 507015T
+paths:
+  /next_takings/:
+    get:
+      operationId: next_takings_medication_schedule
+      description: Получение ближайших предстоящих приемов медикаментов для пользователя.
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+        description: ID пользователя, для которого нужно получить предстоящие приемы.
+        required: true
+        examples:
+          ПримерЗапросаСUserId=1:
+            value: 1
+            summary: Пример запроса с user_id=1
+            description: Запрос для пользователя с id=1
+      tags:
+      - next_takings
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    schedule_id:
+                      type: integer
+                    schedule_name:
+                      type: string
+                    schedule_times:
+                      type: array
+                      items:
+                        type: string
+              examples:
+                ПримерУспешногоОтвета:
+                  value:
+                    user_id: '1'
+                    next_takings:
+                    - schedule_id: 1
+                      schedule_name: Фурацилин
+                      schedule_times:
+                      - 08:00
+                      - 09:45
+                    - schedule_id: 2
+                      schedule_name: Тренболон
+                      schedule_times:
+                      - 08:00
+                      - 09:00
+                    - schedule_id: 3
+                      schedule_name: Ингаверин
+                      schedule_times:
+                      - 08:00
+                  summary: Пример успешного ответа
+                ПримерОтвета,ЕслиНеНайденоСледующихПриемов(илиЖеПользователя):
+                  value:
+                    user_id: '1'
+                    next_takings: []
+                  summary: Пример ответа, если не найдено следующих приемов(или же
+                    пользователя)
+          description: ''
+  /schedule/:
+    get:
+      operationId: retrieve_medication_schedule
+      description: Получение подробной информации о расписании для пользователя.
+      parameters:
+      - in: query
+        name: schedule_id
+        schema:
+          type: integer
+        description: ID расписания для получения данных.
+        required: true
+        examples:
+          ПримерПравильногоЗапроса:
+            value: 1
+            summary: Пример правильного запроса
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+        description: ID пользователя.
+        required: true
+        examples:
+          ПримерПравильногоЗапроса:
+            value: 1
+            summary: Пример правильного запроса
+      tags:
+      - schedule
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationSchedule'
+              examples:
+                ПримерУспешногоОтвета1:
+                  value:
+                    id: 1
+                    medication_name: Фурацилин
+                    frequency: 11
+                    user_id: 1
+                    daily_plan:
+                    - 08:00
+                    - 09:30
+                    - '11:00'
+                    - '12:15'
+                    - '13:45'
+                    - '15:00'
+                    - '16:30'
+                    - '18:00'
+                    - '19:15'
+                    - '20:45'
+                    - '22:00'
+                    duration_days: 4
+                    start_date: '2025-08-23'
+                    end_date: '2025-08-27'
+                  summary: Пример успешного ответа 1
+                ПримерУспешногоОтвета2:
+                  value:
+                    id: 2
+                    medication_name: Миноксидил
+                    frequency: 3
+                    user_id: 1
+                    daily_plan:
+                    - 08:00
+                    - '15:00'
+                    - '22:00'
+                    duration_days: null
+                    start_date: '2025-06-01'
+                    end_date: null
+                  summary: Пример успешного ответа 2
+          description: ''
+    post:
+      operationId: create_medication_schedule
+      description: Создание нового расписания для пользователя.
+      tags:
+      - schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MedicationSchedule'
+            examples:
+              ПримерПравильногоЗапроса:
+                value:
+                  medication_name: Парацетомол
+                  frequency: 8
+                  duration_days: 4
+                  user_id: 1
+                summary: Пример правильного запроса
+              ПримерОтвета:
+                value:
+                  schedule_id: 1
+                summary: Пример ответа
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MedicationSchedule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MedicationSchedule'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MedicationSchedule'
+              examples:
+                ПримерПравильногоЗапроса:
+                  value:
+                    medication_name: Парацетомол
+                    frequency: 8
+                    duration_days: 4
+                    user_id: 1
+                  summary: Пример правильного запроса
+                ПримерОтвета:
+                  value:
+                    schedule_id: 1
+                  summary: Пример ответа
+          description: ''
+  /schedules/:
+    get:
+      operationId: list_medication_schedules
+      description: Получение списка расписаний для пользователя.
+      parameters:
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+        description: ID пользователя, для которого нужно получить расписания.
+        required: true
+        examples:
+          ПримерЗапросаСUserId=1:
+            value: 1
+            summary: Пример запроса с user_id=1
+            description: Запрос для пользователя с id=1
+      tags:
+      - schedules
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicationSchedule'
+              examples:
+                ПримерУспешногоОтвета:
+                  value:
+                  - user_schedules:
+                    - 1
+                    - 2
+                    - 3
+                  summary: Пример успешного ответа
+                ПримерОтвета,ЕслиНеНайденоРасписанийПриемов(илиЖеПользователя):
+                  value:
+                  - user_schedules: []
+                  summary: Пример ответа, если не найдено расписаний приемов(или же
+                    пользователя)
+          description: ''
+  /users/:
+    post:
+      operationId: users_create
+      description: Получение ближайших приемов медикаментов для пользователя.
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          description: No response body
+components:
+  schemas:
+    MedicationSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        medication_name:
+          type: string
+          maxLength: 255
+        frequency:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        duration_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+        user_id:
+          type: integer
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        daily_plan:
+          type: array
+          items:
+            type: string
+            format: time
+          readOnly: true
+      required:
+      - daily_plan
+      - frequency
+      - id
+      - medication_name
+      - start_date
+      - user_id
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
